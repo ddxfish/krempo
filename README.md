@@ -1,0 +1,2 @@
+# krempo
+LAMP Setup Scripts
