@@ -21,8 +21,8 @@ echo "Edits root and ubuntu .bash_aliases with new command aliases and prefs"
 read -r -p "Do you want to run this step? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
-    chmod +x lamp-bash-aliases.sh 
-    /bin/bash lamp-bash-aliases.sh
+    chmod +x lamp-bash-alias.sh 
+    /bin/bash lamp-bash-alias.sh
 else
     echo "We are not adding any aliases"
 fi
@@ -198,8 +198,8 @@ echo "uses the automatic tool from Let's Encrypt to set up SSL certificate."
 read -r -p "Do you want to run this step? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
-    chmod +x lamp-lets-encrypt.sh 
-    /bin/bash lamp-lets-encrypt.sh
+    chmod +x lamp-letsencrypt.sh 
+    /bin/bash lamp-letsencrypt.sh
 else
     echo "Skipping Let's Encrypt"
 fi
