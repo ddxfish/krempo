@@ -14,6 +14,10 @@ echo This will install LAMP.
 echo Press Ctrl + C to Cancel or ENTER to continue
 read nothing
 
+mkdir -p /root/setup/krempo
+cp ./* /root/setup/krempo
+cd /root/setup
+
 #aliases install, separate file if wanted
 clear
 echo "Bash Aliases"
@@ -21,8 +25,8 @@ echo "Edits root and ubuntu .bash_aliases with new command aliases and prefs"
 read -r -p "Do you want to run this step? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
-    chmod +x lamp-bash-alias.sh 
-    /bin/bash lamp-bash-alias.sh
+    chmod +x /root/setup/krempo/lamp-bash-alias.sh 
+    /bin/bash /root/setup/krempo/lamp-bash-alias.sh
 else
     echo "We are not adding any aliases"
 fi
@@ -195,8 +199,8 @@ echo "uses the automatic tool from Let's Encrypt to set up SSL certificate."
 read -r -p "Do you want to run this step? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
-    chmod +x lamp-letsencrypt.sh 
-    /bin/bash lamp-letsencrypt.sh
+    chmod +x /root/setup/krempo/lamp-letsencrypt.sh 
+    /bin/bash /root/setup/krempo/lamp-letsencrypt.sh
 else
     echo "Skipping Let's Encrypt"
 fi
