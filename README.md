@@ -1,3 +1,12 @@
+Version 2020
+Today is 5-23-2020
+Ubuntu is 20.04
+
+20.04 version
+- Bash Aliases (lamp-bash-aliases.sh) - working
+
+
+
 # krempo
 LAMP Setup Scripts<br>
 This sets up a LAMP server with Wordpress. Here is what this does:
