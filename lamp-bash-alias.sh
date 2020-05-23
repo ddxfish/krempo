@@ -17,7 +17,7 @@ alias editalias='vim /root/.bash_aliases'
 alias sourcealias='source ~/.bash_aliases'
 #LAMP stuff
 alias eapache2='vim /etc/apache2/apache2.conf'
-alias rapache2='systemctl reload apache2.service'
+alias rapache2='systemctl restart apache2.service'
 alias saveapache='chown -R www-data:www-data /var/www'
 alias vlapache='tail -n 50 /var/log/apache2/error.log'
 #Webmin and phpmyadmin
