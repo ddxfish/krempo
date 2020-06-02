@@ -41,7 +41,6 @@ mkdir current
 mkdir old1
 mkdir old2
 mkdir old3
-mkdir old4
 
 mv old3 old4
 mv old2 old3
