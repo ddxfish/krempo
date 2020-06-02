@@ -11,7 +11,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 #No double installs
-if [[ -f "/root/website-backups/backup.sh ]]; then
+if [[ -f "/root/website-backups/backup.sh" ]]; then
    echo "/root/website-backups/backup.sh already exists. Remove old backup setup to install again" 
    exit 1
 fi
