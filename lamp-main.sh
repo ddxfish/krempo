@@ -45,8 +45,14 @@ apt-get -y install apache2 php7.4 libapache2-mod-php7.4 php7.4-mysql php7.4-curl
 #shutdown phpmyadmin every night
 (crontab -l ; echo "0 23 * * * mv /usr/share/phpmyadmin /usr/share/phpmyadminx") | sort - | uniq - | crontab -
 #secure SQL
+clear
+echo "Securing SQL. Press N for the first one and Y for the rest."
+read nothing
 mysql_secure_installation
 a2enmod rewrite
+#change default file upload size in php.ini
+sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 16M/g' /etc/php/7.4/apache2/php.ini
+sed -i 's/post_max_size = 8M/post_max_size = 16M/g' /etc/php/7.4/apache2/php.ini
 systemctl restart apache2
 
 #Change default apache directory
@@ -63,12 +69,12 @@ systemctl restart apache2
 
 
 #Security for Apache
-#sed -i 's/ServerTokens OS/ServerTokens Prod/g' /etc/apache2/conf-available/security.conf
-#sed -i 's/ServerSignature On/ServerSignature Off/g' /etc/apache2/conf-available/security.conf
+sed -i 's/ServerTokens OS/ServerTokens Prod/g' /etc/apache2/conf-available/security.conf
+sed -i 's/ServerSignature On/ServerSignature Off/g' /etc/apache2/conf-available/security.conf
 #Disallow indexes by default, denied ACCESS TO var/www
-#perl -0777 -i.original -pe 's#<Directory /var/www/>\n\tOptions Indexes FollowSymLinks\n\tAllowOverride None\n\tRequire all granted#<Directory /var/www/>\n\tOptions -Indexes +FollowSymLinks\n\tAllowOverride None\n\tRequire all denied#igs' /etc/apache2/apache2.conf
+perl -0777 -i.original -pe 's#<Directory /var/www/>\n\tOptions Indexes FollowSymLinks\n\tAllowOverride None\n\tRequire all granted#<Directory /var/www/>\n\tOptions -Indexes +FollowSymLinks\n\tAllowOverride None\n\tRequire all denied#igs' /etc/apache2/apache2.conf
 #perl -0777 -i.original -pe 's#<Directory />\n\tOptions FollowSymLinks#<Directory />\n\tOptions None#igs' /etc/apache2/apache2.conf
-#diff /etc/apache2/apache2.conf{,.original}
+diff /etc/apache2/apache2.conf{,.original}
 
 #set up ufw
 apt-get -y install ufw
@@ -205,6 +211,22 @@ else
     echo "Skipping Let's Encrypt"
 fi
 
+#aliases install, separate file if wanted
+clear
+echo "Set Up Backups"
+echo "Creates weekly backups of the sql and website files to /root/website-backups"
+echo "You really need 20GB or more on your root volume for this!!"
+read -r -p "Do you want to run this step? [y/N] " response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+    chmod +x /root/setup/krempo/lamp-backups.sh 
+    /bin/bash /root/setup/krempo/lamp-backups.sh $websitename $databasename $databaseusername $databaseuserpassword
+else
+    echo "We are not adding backup scripts"
+fi
+sleep 3
+
 echo "----------------------------"
 echo "We have reached the end of the script!"
 echo "----------------------------"
+read nothing
