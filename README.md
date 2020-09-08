@@ -14,7 +14,7 @@ lamp-main.sh sets up a LAMP server with Wordpress. Here is what this does:
 - Changes SSH port to 65420
 - Installs Webmin on port 10099
 <br>
-lamp-main.sh can also install Wordpress for you, but you can cancel here<br>
+lamp-main.sh can also install Wordpress for you, but you can cancel here
 - Creates a VirtualHost for a site with http and https
 - Downloads Wordpress and puts it in your website root
 - Creates database for Wordpress and user with perms
