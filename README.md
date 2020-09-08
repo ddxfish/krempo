@@ -1,8 +1,4 @@
-To be brief, you get a new blank Ubuntu VPS and run this script on it as root to have a fully set up LAMP server, and optionally a full Wordpress install. It asks you some questions but nothing difficult.<br>
-<br>
-Version 2020.2<br>
-Today is 9-8-2020<br>
-Ubuntu is 20.04.1<br>
+To be brief, you get a new blank Ubuntu 20.04.1 VPS and run this script on it as root to have a fully set up LAMP server, and optionally a full Wordpress install. It asks you some questions but nothing difficult. Today is 9-8-2020.<br>
 <br>
 
 # krempo - automatic LAMP setup
