@@ -4,7 +4,8 @@ Version 2020.2<br>
 Today is 9-8-2020<br>
 Ubuntu is 20.04.1<br>
 <br>
-# krempo
+
+# krempo - automatic LAMP setup
 lamp-main.sh sets up a LAMP server with Wordpress. Here is what this does:
 - apt upgrade
 - .bash_aliases added to both users, check the aliases
@@ -13,14 +14,14 @@ lamp-main.sh sets up a LAMP server with Wordpress. Here is what this does:
 - ufw firewall installed, block all, open 22, 80, 443, 10099, 65420
 - Changes SSH port to 65420
 - Installs Webmin on port 10099
-<br>
-lamp-main.sh can also install Wordpress for you, but you can cancel here
+
+lamp-main.sh can also install Wordpress for you, but you can cancel here:
 - Creates a VirtualHost for a site with http and https
 - Downloads Wordpress and puts it in your website root
 - Creates database for Wordpress and user with perms
 - If you have a real domain, Let's Encrypt free SSL cert installs
 - Creates automatic weekly backups in /root/website-backups
-<br>
+
 
 # Files
 lamp-main.sh - You only need to run this one. Others are run by it.<br>
