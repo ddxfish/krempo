@@ -225,7 +225,7 @@ else
     echo "Skipping Let's Encrypt"
 fi
 
-#aliases install, separate file if wanted
+#automatic backups every week
 clear
 echo "Set Up Backups"
 echo "Creates weekly backups of the sql and website files to /root/website-backups"
@@ -237,6 +237,22 @@ then
     /bin/bash /root/setup/krempo/lamp-backups.sh $websitename $databasename $databaseusername $databaseuserpassword
 else
     echo "We are not adding backup scripts"
+fi
+sleep 3
+
+#Mod Security
+clear
+echo "mod_security?"
+echo "Advanced security plugin for Apache"
+echo "Sometimes blocks legitimate use!!!!"
+echo "Probably don't run this unless you can tweak it"
+read -r -p "Do you want to install mod_security? [y/N] " response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+    chmod +x /root/setup/krempo/lamp-modsecurity2.sh
+    /bin/bash /root/setup/krempo/lamp-modsecurity2.sh
+else
+    echo "Skipping Mod Security"
 fi
 sleep 3
 
