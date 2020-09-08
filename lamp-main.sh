@@ -1,8 +1,9 @@
 #!/bin/bash
-#script to set up aws as a web server.
-#Version 2020.1
-#Today is: 5-23-2020
-#Ubuntu is 20.04 LTS
+#script to set up aws as a web server
+#Beachside Technology
+#Version 2020.2
+#Today is: 9-8-2020
+#Ubuntu is 20.04.1 LTS
 
 #run it as root!!!
 if [[ $EUID -ne 0 ]]; then
@@ -21,14 +22,16 @@ cd /root/setup
 #aliases install, separate file if wanted
 clear
 echo "Bash Aliases"
-echo "Edits root and ubuntu .bash_aliases with new command aliases and prefs"
+echo "Edits root and main user .bash_aliases with new command aliases and prefs"
+echo "It makes things look good and doesn't interfere much"
+echo "see .bash_aliases for a list of alias commands"
 read -r -p "Do you want to run this step? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
     chmod +x /root/setup/krempo/lamp-bash-alias.sh 
     /bin/bash /root/setup/krempo/lamp-bash-alias.sh
 else
-    echo "We are not adding any aliases"
+    echo "fine, we are not adding any aliases..........."
 fi
 sleep 3
 
@@ -101,23 +104,30 @@ read nothing
 systemctl restart sshd
 
 
+#Webmin installation on port 10099
+read -r -p "Do you want webmin installed? [y/N] " response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+	#set up webmin using apt
+	echo deb https://download.webmin.com/download/repository sarge contrib >> /etc/apt/sources.list
+	cd /root/setup
+	wget http://www.webmin.com/jcameron-key.asc
+	apt-key add jcameron-key.asc
+	apt-get update
+	apt-get -y install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python
+	apt-get -y install webmin
+	sed -i 's#10000#10099#g' /etc/webmin/miniserv.conf
+	systemctl restart webmin
+	#shutdown webmin nightly
+	(crontab -l ; echo "0 23 * * * systemctl stop webmin") | sort - | uniq - | crontab -
+else
+	echo "no webmin for you"
+    exit 1
+fi
 
 
 
-#set up webmin using apt
-echo deb https://download.webmin.com/download/repository sarge contrib >> /etc/apt/sources.list
-cd /root/setup
-wget http://www.webmin.com/jcameron-key.asc
-apt-key add jcameron-key.asc
-apt-get update
-apt-get -y install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python
-apt-get -y install webmin
-sed -i 's#10000#10099#g' /etc/webmin/miniserv.conf
-systemctl restart webmin
-#shutdown webmin nightly
-(crontab -l ; echo "0 23 * * * systemctl stop webmin") | sort - | uniq - | crontab -
-
-
+#begin actual website installation
 clear
 echo "This next step will:"
 echo "Install a virtual host (website)"
@@ -185,15 +195,19 @@ chown -R www-data:www-data /var/www
 rm latest.tar.gz
 rm -fr wordpress
 
+clear
 #Database
-echo Input database name:
+echo Input new database name:
 read databasename
-echo Input database username:
+echo Input new database username:
 read databaseusername
-echo Input database user password
+echo Input new database user password:
 read databaseuserpassword
 echo ----------------------
-echo Get your root password ready, passing to mysql!!!!
+echo Get your root password ready.
+echo This will ask for your root password twice.
+echo one to create db and one for user with permissions.
+echo Go ahead with your root pass twice:
 
 mysql -u root -p -e "CREATE DATABASE $databasename"
 mysql -u root -p -D $databasename -e "GRANT ALL PRIVILEGES ON $databasename.* TO $databaseusername@'localhost' IDENTIFIED BY '$databaseuserpassword';"
@@ -228,5 +242,6 @@ sleep 3
 
 echo "----------------------------"
 echo "We have reached the end of the script!"
+echo "Visit your website $websitename now in a browser"
 echo "----------------------------"
 read nothing
