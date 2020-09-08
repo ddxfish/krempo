@@ -1,5 +1,5 @@
 #Install ModSecurity2 on Apache2
-#Today is 2020-2-16
+#Today is 2020-9-8
 
 #run it as root!!!
 if [[ $EUID -ne 0 ]]; then
@@ -34,4 +34,5 @@ service apache2 restart
 
 echo Mod Security is now setup. 
 echo Try-- http://127.0.0.1/?exec=/bin/bash
+echo this should be blocked.
 read nothing
