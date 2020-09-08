@@ -34,4 +34,4 @@ service apache2 restart
 
 echo Mod Security is now setup. 
 echo Try-- http://127.0.0.1/?exec=/bin/bash
-
+read nothing
