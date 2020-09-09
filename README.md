@@ -1,4 +1,4 @@
-To be brief, you get a new blank Ubuntu 20.04.1 VPS and run this script on it as root to have a fully set up LAMP server, and optionally a full Wordpress install. It asks you some questions but nothing difficult. Today is 9-8-2020.<br>
+To be brief, you get a new blank Ubuntu 20.04.1 VPS and run this script on it as root to have a fully set up LAMP server, and optionally a full Wordpress install. It asks you some questions but nothing difficult. Get your notepad ready, you will have to make up a few passwords and keep track of them.
 <br>
 
 # krempo - automatic LAMP setup
@@ -18,6 +18,34 @@ lamp-main.sh can also install Wordpress for you, but you can cancel here:
 - If you have a real domain, Let's Encrypt free SSL cert installs
 - Creates automatic weekly backups in /root/website-backups
 
+# Install using lamp-main.sh
+- Download the .tar or .zip
+- Unzip on your server to /root/krempo
+- chmod +x *.sh
+- ./lamp-main.sh
+
+# Tools
+After you install, you have acces to a few tools to help you
+- phpmyadmin
+  - disables itself every night for security - it just changes the directory name
+  - **enablephpmyadmin** / **disablephpmyadmin** aliases both work to enable it
+  - http://example.com/phpmyadmin/ for access
+- Webmin
+  - Disables itself every night for security - stops the service
+  - **startwebmin** / **stopwebmin** is an alias to systemctl stop/start
+  - https://example.com:10099 for access (reset your root pass first!)
+- Aliases
+  - goweb - cd /var/www
+  - duu --- du --max-depth 1   - shows directory usage
+  - saveapache - resets all permissions to www-data user
+  - rapache2 - restart apache2
+- Backups (requires more than 8GB storage!)
+  - Makes a weekly backup of SQL and website files with timestamp
+  - Rotates out backups, keeps 5 total
+  - Only works for the website set up in script
+  - /root/website-backups
+  
+  
 
 # Files
 lamp-main.sh - You only need to run this one. Others are run by it.<br>
