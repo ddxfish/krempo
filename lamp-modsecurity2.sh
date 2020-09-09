@@ -9,7 +9,7 @@ fi
 
 #Install
 apt-get update
-apt-get install libapache2-mod-security2 git
+apt-get -y install libapache2-mod-security2 git
 service apache2 restart
 
 #Basic security conf
@@ -33,6 +33,5 @@ service apache2 restart
 
 
 echo Mod Security is now setup. 
-echo Try-- http://127.0.0.1/?exec=/bin/bash
-echo this should be blocked.
-read nothing
+echo If things dont work, blame this first
+pause 5
