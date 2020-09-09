@@ -23,8 +23,7 @@ cd /root/setup
 clear
 echo "Bash Aliases"
 echo "Edits root and main user .bash_aliases with new command aliases and prefs"
-echo "It makes things look good and doesn't interfere much"
-echo "see .bash_aliases for a list of alias commands"
+echo "We recommend you do this and check .bash_aliases for a list of alias commands"
 read -r -p "Do you want to run this step? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
@@ -77,7 +76,7 @@ sed -i 's/ServerSignature On/ServerSignature Off/g' /etc/apache2/conf-available/
 #Disallow indexes by default, denied ACCESS TO var/www
 perl -0777 -i.original -pe 's#<Directory /var/www/>\n\tOptions Indexes FollowSymLinks\n\tAllowOverride None\n\tRequire all granted#<Directory /var/www/>\n\tOptions -Indexes +FollowSymLinks\n\tAllowOverride None\n\tRequire all denied#igs' /etc/apache2/apache2.conf
 #perl -0777 -i.original -pe 's#<Directory />\n\tOptions FollowSymLinks#<Directory />\n\tOptions None#igs' /etc/apache2/apache2.conf
-diff /etc/apache2/apache2.conf{,.original}
+#diff /etc/apache2/apache2.conf{,.original}
 
 #set up ufw
 apt-get -y install ufw
@@ -138,7 +137,8 @@ if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
     echo "Installing website..."
 else
-	echo "You have completed the setup"
+	echo "You have completed the setup, goodbye!"
+	read nothing
     exit 1
 fi
 
@@ -205,12 +205,41 @@ echo Input new database user password:
 read databaseuserpassword
 echo ----------------------
 echo Get your root password ready.
-echo This will ask for your root password twice.
-echo one to create db and one for user with permissions.
+echo This will ask for your root password thrice.
+echo 1- Create DB, 2- Create User, 3- Grant
 echo Go ahead with your root pass twice:
 
+#create database with info given
 mysql -u root -p -e "CREATE DATABASE $databasename"
-mysql -u root -p -D $databasename -e "GRANT ALL PRIVILEGES ON $databasename.* TO $databaseusername@'localhost' IDENTIFIED BY '$databaseuserpassword';"
+mysql -u root -p -e "CREATE USER '$databaseusername'@'localhost' IDENTIFIED BY '$databaseuserpassword';"
+mysql -u root -p -D $databasename -e "GRANT ALL ON $databasename.* TO '$databaseusername'@'localhost';"
+
+#install wordpress CLI tool
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+chmod +x wp-cli.phar
+sudo mv wp-cli.phar /usr/local/bin/wp
+
+clear
+#install wordpress with random password
+wordpresspass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+#creat config
+wp config create --allow-root --dbname=ccompassd8 --dbuser=ccafcj9dd --dbpass=ajnd8dahf2f2199jfd
+#create DB
+wp db create --allow-root
+#install the core
+wp core install --allow-root --url=$websitename --title=$websitename --admin_user=supervisor --admin_password=$wordpresspass --admin_email=info@$websitename
+pause 3
+
+#MAKE SURE USER TAKES THE LOGIN INFO
+echo Copy your Wordpress login information:
+echo -----------------------------------
+echo host: http://$websitename/wp-admin/
+echo user: supervisor
+echo pass: $wordpresspass
+read nothing
+echo Are you really sure you got that? Its important.
+read nothing
+
 
 #Install SSL Certificate using Let's Encrypt - separate file
 clear
