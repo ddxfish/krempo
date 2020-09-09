@@ -28,6 +28,7 @@ echo "You only need to run this setup once"
 echo ----------Creating backup script------------
 pause 3
 echo "
+cd /root/website-backups
 rm -fr old4
 mkdir current
 mkdir old1
