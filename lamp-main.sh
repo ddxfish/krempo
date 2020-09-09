@@ -223,8 +223,8 @@ clear
 #install wordpress with random password
 wordpresspass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
 #creat config
-wp config create --allow-root --dbname=ccompassd8 --dbuser=ccafcj9dd --dbpass=ajnd8dahf2f2199jfd
-#create DB
+wp config create --allow-root --dbname=$databasename --dbuser=$databaseusername --dbpass=$databaseuserpassword
+#create DB -- might fail due to already created
 wp db create --allow-root
 #install the core
 wp core install --allow-root --url=$websitename --title=$websitename --admin_user=supervisor --admin_password=$wordpresspass --admin_email=info@$websitename
