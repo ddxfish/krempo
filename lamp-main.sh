@@ -207,7 +207,7 @@ echo ----------------------
 echo Get your root password ready.
 echo This will ask for your root password thrice.
 echo 1- Create DB, 2- Create User, 3- Grant
-echo Go ahead with your root pass twice:
+echo Go ahead with your root pass three times:
 
 #create database with info given
 mysql -u root -p -e "CREATE DATABASE $databasename"
@@ -220,6 +220,7 @@ chmod +x wp-cli.phar
 sudo mv wp-cli.phar /usr/local/bin/wp
 
 clear
+cd /var/www/$websitename/html
 #install wordpress with random password
 wordpresspass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
 #creat config
@@ -240,7 +241,7 @@ read nothing
 echo Are you really sure you got that? Its important.
 read nothing
 
-
+cd /root/krempo
 #Install SSL Certificate using Let's Encrypt - separate file
 clear
 echo "Let's Encrypt?"
