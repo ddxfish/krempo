@@ -1,71 +1,86 @@
-To be brief, you get a new blank Ubuntu 20.04.x VPS or bare metal with minimum 40GB storage for backups of a small site, and run this script on it as root to have a fully set up LAMP server, and optionally a full Wordpress install. It asks you some questions but nothing difficult. Get your notepad ready, you will have to make up a few passwords and keep track of them. 
+This is a set of scripts that simplifies the installation of LAMP (Linux Apache MySQL PHP) on an Ubuntu 20.04.3 LTS server. It works on bare metal or cloud servers. You run the script and it walks you through the setup. It takes about 15 minutes on a low-end cloud server.
 <br>
 
 # krempo - automatic LAMP setup
-lamp-main.sh sets up a LAMP server with Wordpress.
+Here is what this script does exactly:
 - apt upgrade
-- .bash_aliases added to both users, check the aliases
-- Installs php 7.4, Apache2, mysql-server, mod_ssl
-- Runs the script/wizard to secure your sql server
-- ufw firewall installed, block all, open 22, 80, 443, 10099, 65420
+- bash aliases for convenience
+- PHP 7.4, Apache2, mysql-server, mod_ssl
+- Secure MySQL wizard
+- ufw firewall installed, open 22, 80, 443, 10099, 65420
 - Changes SSH port to 65420
-- Installs Webmin on port 10099
+- Installs phpmyadmin example.com/phpmyadmin
+- (optional) Installs Webmin on port 10099
+- (optional) Creates a Virtual Host for your site (supports subdomains now)
+- (optional) Installs Wordpress
+- (optional) Creates backup script for website and database
+- (optional) Let's Encrypt SSL certificate (DNS A record required)
+- (optional) Mod_security (only use if you can troubleshoot)
 
-lamp-main.sh can also install Wordpress for you, but you can cancel here:
-- Creates a VirtualHost for a site with http and https
-- Downloads Wordpress and puts it in your website root
-- Creates database for Wordpress and user with perms
-- If you have a real domain, Let's Encrypt free SSL cert installs
-- Creates automatic weekly backups in /root/website-backups
 
-# Install using lamp-main.sh
+# Usage
+Run lamp-main.sh, it installs the other scripts during the install. (optional) items give you a choice during install.
 - sudo su
 - cd /root
 - git clone https://github.com/ddxfish/krempo.git
 - cd krempo
 - chmod +x *.sh
 - ./lamp-main.sh
-- apt-get upgrade (automatic)
-- SQL Security - Answer No to first question, Yes to the rest
-- Apache security (automatic)
-- UFW Firewall (automatic, see open ports)
-- Change SSH to port 65420 (automatic)
-- Install webmin (yes/no, only if you use it)
-- Enter domain without www for virtual host (yes/no)
-- Create your SQL db, user, pass (write down logins)
-- Install WordPress files (write down logins)
-- Set up Wordpress website (gives you login)
-- Let's Encrypt free SSL cert setup (yes/no)
-- Set up backups for this site? Creates weekly backup script (yes/no)
-- Install mod_security2? (yes/no, can block some normal use)
+- follow the script
 
 # Tools
-After you install, you have acces to a few tools to help you
+After you install, you have acces to a few tools to manage your site
 - phpmyadmin
   - disables itself every night for security - it just changes the directory name
-  - **enablephpmyadmin** / **disablephpmyadmin** aliases both work to enable it
+  - **enablephpmyadmin** / **disablephpmyadmin** shell aliases both work to enable/disable
   - http://example.com/phpmyadmin/ for access
 - Webmin
   - Disables itself every night for security - stops the service
   - **startwebmin** / **stopwebmin** is an alias to systemctl stop/start
-  - https://example.com:10099 for access (reset your root pass first!)
-- Aliases
+  - https://example.com:10099 for access
+- Shell Aliases
   - goweb - cd /var/www
   - duu --- du --max-depth 1   - shows directory usage
   - saveapache - resets all permissions to /var/www to www-data
   - rapache2 - restart apache2
-- Backups (requires more than 8GB storage!)
+  - enablephpmyadmin / disablephpmyadmin
+  - startwebmin / stopwebmin
+- Backups (make sure you have enough storage space!)
   - Makes a weekly backup of SQL and website files with timestamp
   - Rotates out backups, keeps 5 total
   - Only works for the website set up in script
-  - /root/website-backups
-  
+  - /root/website-backups is the backup location
+
 
 # Files
-lamp-main.sh - You only need to run this one. Others are run by it.<br>
+Just run the main file and it calls the rest. You can run letsencrypt directly, but the others have command line arguments required for them to work.
+lamp-main.sh - You only need to run this one. This script calls the others.<br>
 lamp-modsecurity2.sh	- Mod_security install -- mild danger: may prevent normal use<br>
 lamp-bash-alias.sh - installs aliases to use features in this script<br>
 lamp-letsencrypt.sh - installs a free SSL cert on your site<br>
-lamp-backups.sh - creates a weekly backup of the site in /root/website-backups<br>
+lamp-backups.sh - (can't run directly) creates a backup script for the website<br>
+lamp-wordpress.sh - (can't run directly) installs complete WordPress site with login info
 
+# Troubleshooting
+**no response from URL**
+- Check your firewalls (AWS Security Groups) to ensure port 80 and 443 are open. AWS has its own firewall layered on top of our UFW setup.
+- Static IP / Elastic IP needs to be set up so DNS matches the IP
 
+**Cant login to SSH or SFTP**
+- We changed the port to 65420 instead of 22
+- Check firewall on your cloud provider, or port forwarding if applicable
+
+**Webmin not working**
+- This will shut down every 24 hours for security. **startwebmin** shell alias will start webmin.
+- Reset root password if you are using root user
+- Try https://www.yourdomain.com:10099
+
+**phpmyadmin not working**
+- This shuts down every 24 hours for security. Shell alias **enablephpmyadmin** will enable phpmyadmin
+- Login to your database using your db user and pass we created in krempo
+
+# AWS Setup
+If you are on AWS EC2 then you just spin up a new instance with at least 1GB memory and 40GB storage volume. Get more memory and storage if you can. Use Ubuntu 20.04.3 LTS with x86/x64. Edit your security group to allow ports 22, 80, 443, 10099, 65420 from addresses 0.0.0.0/0 - if you have tech knowledge, only allow your own IP for 22, 10099 and 65420. Save your private key at the end and connect using SSH. Create an Elastic IP in AWS console and attach it to your instance. If you are on Linux, use the shell or Remmina to connect. If you are on Windows you use Puttygen to convert to a putty private key, then use putty to connect to your server with that private key, ubuntu@123.123.123.123 on port 22. Replace with your AWS elastic IP.  
+
+# Next Steps
+- Automate entirely by passing in arguments
