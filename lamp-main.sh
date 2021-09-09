@@ -138,11 +138,11 @@ echo "If you skip this, the script exits"
 read -r -p "Do you want to do this? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
-    echo "Installing website..."
+	echo "Installing website..."
 else
 	echo "You have completed the setup, goodbye!"
 	read nothing
-    exit 1
+	exit 1
 fi
 
 #Set up Virtual Host and root dir for a site
