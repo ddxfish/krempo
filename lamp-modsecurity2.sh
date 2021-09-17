@@ -34,5 +34,3 @@ service apache2 restart
 
 echo Mod Security is now setup. 
 echo If things dont work, blame modsecurity first
-echo press enter to continue
-read nothing
