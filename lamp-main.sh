@@ -1,9 +1,9 @@
 #!/bin/bash
 #KREMPO - script to set up aws instance as a web server
-#Chris Westpfahl
-#Version 2021.2
-#Today is: 9-8-2021
+#Version 2021.3
+#Today is 9-17-2021
 #Ubuntu is 20.04.3 LTS
+
 
 #run it as root!!!
 if [[ $EUID -ne 0 ]]; then
@@ -18,6 +18,129 @@ read nothing
 mkdir -p /root/setup/krempo
 cp ./* /root/setup/krempo
 cd /root/setup
+touch /root/setup/krempo/logininfo.txt
+
+clear
+echo "Create your root password for this server:"
+read rootpass
+echo -e "$rootpass\n$rootpass" | passwd root
+echo "Root: $rootpass" | tee -a /root/setup/krempo/logininfo.txt
+
+#init
+InstallWebmin=0
+InstallVirtualHost=0
+InstallLetsEncrypt=0
+InstallModSecurity=0
+InstallWordPress=0
+InstallBackupScript=0
+
+clear
+#used later for webmin
+read -r -p "Krempo: Do you want webmin installed? [y/N] " response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+    InstallWebmin=1
+fi
+
+clear
+#used later, lets get info for the install
+echo "Krempo: Do you want to install a Virtual Host during install?"
+echo "You set a domain and directory where its files live"
+read -r -p "Do you want to do this? [y/N] " response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+    InstallVirtualHost=1
+    #Set up Virtual Host and root dir for a site
+    clear
+    echo "Krempo---------------------------------------------------"
+    echo "Enter the primary website domain without your subdomain"
+    echo "Example: mysite.com"
+    read websitename
+    clear
+    echo "Please enter the subdomain you are using with $websitename"
+    echo "Do not name it default"
+    echo "Example: www"
+    echo "Example2: new"
+    echo "Example3: <leave blank for no subdomain>"
+    read subdomain
+    if [[ "$subdomain" == "" ]]; then
+        subdomain="default"
+        fulldomain=$websitename
+    else
+        fulldomain=$subdomain.$websitename
+    fi
+    if [[ "$subdomain" == "www" ]]; then
+        read -r -p "Would you like both www.$websitename and $websitename to both work for this host? [y/N] " response
+        if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+            serveralias="ServerAlias $websitename"
+        else
+            serveralias=""
+        fi
+    fi
+    #get this for later to automate the script
+    clear
+    echo "Let's Encrypt?"
+    echo "uses the automatic tool from Let's Encrypt to set up SSL certificate."
+    read -r -p "Do you want to run this step? [y/N] " response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+    then
+        InstallLetsEncrypt=1
+    fi
+    #Mod Security
+    clear
+    echo "mod_security?"
+    echo "Advanced security plugin for Apache - MAY BLOCK LEGITIMATE USE"
+    echo "Say N or No if you aren't sure!"
+    read -r -p "Do you want to install mod_security? [y/N] " response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+    then
+        InstallModSecurity=1
+    fi
+fi
+clear
+
+#used later, lets get WordPress stuff
+echo "Create a new database and install WordPress?"
+read -r -p "Do you want to do this step? [y/N] " response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+    InstallWordPress=1
+    #Database
+    databasebase=`echo $websitename | cut -c1-5`
+    databasename=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1 | sed s/^/$databasebase/g`
+    databaseusername=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1 | sed s/^/$databasebase/g`
+    databaseuserpassword=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 14 | head -n 1`
+    wordpresspass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1`
+    clear
+    echo "Copy this data for later"
+    echo "You can find it in /root/setup/krempo/logininfo.txt"
+    echo "DB Name: $databasename" | tee -a /root/setup/krempo/logininfo.txt
+    echo "DB User: $databaseusername" | tee -a /root/setup/krempo/logininfo.txt
+    echo "DB Pass: $databaseuserpassword" | tee -a /root/setup/krempo/logininfo.txt
+    echo -------------- | tee -a /root/setup/krempo/logininfo.txt
+    echo "WP host: http://$fulldomain/wp-admin/" | tee -a /root/setup/krempo/logininfo.txt
+    echo "WP user: supervisor" | tee -a /root/setup/krempo/logininfo.txt
+    echo "WP pass: $wordpresspass" | tee -a /root/setup/krempo/logininfo.txt
+    echo -------------- | tee -a /root/setup/krempo/logininfo.txt
+    echo "press enter to continue"
+    read nothing
+    #automatic backups every week
+    clear
+    echo "Set Up Backups?"
+    echo "Simple script run by cron to backup files and DB weekly to /root/website-backups"
+    echo "You really need 30GB or more on your root volume for this!!"
+    read -r -p "Do you want to run this step? [y/N] " response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+    then
+        InstallBackupScript=1
+    fi
+fi
+
+
+
+
+
+#begin actual script
 
 #aliases install, separate file if wanted
 clear
@@ -48,11 +171,22 @@ apt-get -y install apache2 php7.4 libapache2-mod-php7.4 php7.4-mysql php7.4-curl
 (crontab -l ; echo "0 23 * * * mv /usr/share/phpmyadmin /usr/share/phpmyadminx") | sort - | uniq - | crontab -
 #secure SQL
 clear
-echo "Krempo: Securing SQL"
-echo "Krempo: Press N for the first question and Y for the rest."
-echo "press enter to continue"
-read nothing
-mysql_secure_installation
+
+#Secure SQL - automatic
+#make sure root has password
+rootdbpass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 14 | head -n 1`
+mysqladmin -u root password $rootdbpass
+#no anonymous user
+mysql -e "DROP USER ''@'localhost'"
+#drop empty user for our hostname (hopefully)
+mysql -e "DROP USER ''@'$(hostname)'"
+#Test database delete if exist
+mysql -e "DROP DATABASE IF EXISTS test"
+#Reloading causes passwords to be required
+mysql -e "FLUSH PRIVILEGES"
+
+
+#change some apache variables for performance and functions
 a2enmod rewrite
 #change default file upload size in php.ini
 sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 16M/g' /etc/php/7.4/apache2/php.ini
@@ -60,7 +194,7 @@ sed -i 's/post_max_size = 8M/post_max_size = 16M/g' /etc/php/7.4/apache2/php.ini
 sed -i 's/memory_limit = 128M/memory_limit = 256M/g' /etc/php/7.4/apache2/php.ini
 systemctl restart apache2
 
-#Change default apache directory
+#Change default apache directory to match how we do it
 #/var/www/default/html
 mkdir -p /var/www/default/html
 mv /var/www/html/* /var/www/default/html
@@ -88,7 +222,7 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 ufw allow 10099/tcp
 ufw allow 65420/tcp
-ufw enable
+echo "y" | ufw enable
 ufw reload
 ufw status
 
@@ -102,14 +236,12 @@ sed -i 's/X11Forwarding/#X11Forwarding/g' /etc/ssh/sshd_config
 echo --------------------------------
 echo Krempo: I am restarting SSHD on port 65420
 echo -------------------------------------
-echo press any key to continue
-read nothing
 systemctl restart sshd
 
 
 #Webmin installation on port 10099
-read -r -p "Krempo: Do you want webmin installed? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+#read -r -p "Krempo: Do you want webmin installed? [y/N] " response
+if [[ $InstallWebmin == 1 ]]
 then
 	#set up webmin using apt
 	echo deb https://download.webmin.com/download/repository sarge contrib >> /etc/apt/sources.list
@@ -125,59 +257,24 @@ then
 	(crontab -l ; echo "0 23 * * * systemctl stop webmin") | sort - | uniq - | crontab -
 else
 	echo "no webmin for you"
-    exit 1
 fi
 
 
 
-#begin actual website installation
+#Virtual Hosts section (pulled variables from up top)
+#Script exits here if Virtual Host is not set up
 clear
-echo "Krempo: This next step will install a virtual host"
-echo "It allows Apache to direct your .com to files in a directory"
-echo "If you skip this, the script exits"
-read -r -p "Do you want to do this? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+if [[ $InstallVirtualHost == 1 ]]
 then
 	echo "Installing website..."
 else
 	echo "You have completed the setup, goodbye!"
+	echo "Open /root/setup/krempo/logininfo.txt for your login details"
 	read nothing
 	exit 1
 fi
 
-#Set up Virtual Host and root dir for a site
-clear
-echo "Krempo---------------------------------------------------"
-echo "Enter the primary website domain without your subdomain"
-echo "Example: mysite.com"
-read websitename
-clear
-echo "Please enter the subdomain you are using with $websitename"
-echo "Do not name it default"
-echo "Example: www"
-echo "Example2: new"
-echo "Example3: <leave blank for no subdomain>"
-read subdomain
-if [[ "$subdomain" == "" ]]; then
-    subdomain="default"
-    fulldomain=$websitename
-else
-    fulldomain=$subdomain.$websitename
-fi
-if [[ "$subdomain" == "www" ]]; then
-    read -r -p "Would you like both www.$websitename and $websitename to both work for this host? [y/N] " response
-    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-        serveralias="ServerAlias $websitename"
-    else
-        serveralias=""
-    fi
-fi
-
 websitedir="/var/www/$websitename/$subdomain/html"
-#echo $fulldomain
-#echo $websitedir
-
-
 
 mkdir -p $websitedir
 touch /etc/apache2/sites-available/$fulldomain.conf
@@ -217,79 +314,44 @@ a2ensite $fulldomain.conf
 systemctl restart apache2
 
 
-echo "-------------"
-echo "This step is going to:"
-echo "Create a new database for a website"
-echo "Install Wordpress for this website"
-read -r -p "Do you want to do this step? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+#Install database and WordPress from variables we pulled up top
+if [[ $InstallWordPress == 1 ]]
 then
-    #Database
-    echo "Create a name, username and password for the database in this step..."
-    echo Input new database name:
-    read databasename
-    echo Input new database username:
-    read databaseusername
-    echo Input new database user password:
-    read databaseuserpassword
-    echo ----------------------
     #lamp-wordpress.sh $websitename $subdomain $websitedir $databasename $databaseusername $databaseuserpassword $fulldomain
     chmod +x /root/setup/krempo/lamp-wordpress.sh
-    /bin/bash /root/setup/krempo/lamp-wordpress.sh $websitename $subdomain $websitedir $databasename $databaseusername $databaseuserpassword $fulldomain
-else
-    echo "We did not create a database or install WordPress"
-    echo "press any key to continue"
-    read nothing
+    /bin/bash /root/setup/krempo/lamp-wordpress.sh $websitename $subdomain $websitedir $databasename $databaseusername $databaseuserpassword $fulldomain $wordpresspass $rootpass
 fi
 
 
 cd /root/krempo
-#Install SSL Certificate using Let's Encrypt - separate file
+#Install SSL Certificate using Let's Encrypt
+#calls a script in krempo dir
 clear
-echo "Let's Encrypt?"
-echo "uses the automatic tool from Let's Encrypt to set up SSL certificate."
-read -r -p "Do you want to run this step? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+if [[ $InstallLetsEncrypt == 1 ]]
 then
     chmod +x /root/setup/krempo/lamp-letsencrypt.sh
     /bin/bash /root/setup/krempo/lamp-letsencrypt.sh
-else
-    echo "Skipping Let's Encrypt"
 fi
 
 #automatic backups every week
 clear
-echo "Set Up Backups"
-echo "Creates weekly backups of the sql and website files to /root/website-backups"
-echo "You really need 30GB or more on your root volume for this!!"
-read -r -p "Do you want to run this step? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+if [[ $InstallBackupScript == 1 ]]
 then
     chmod +x /root/setup/krempo/lamp-backups.sh
     /bin/bash /root/setup/krempo/lamp-backups.sh $fulldomain $databasename $databaseusername $databaseuserpassword
-else
-    echo "We are not adding backup scripts"
 fi
 sleep 3
 
 #Mod Security
-clear
-echo "mod_security?"
-echo "Advanced security plugin for Apache"
-echo "Sometimes blocks legitimate use!!!!"
-echo "Probably don't run this unless you can tweak it"
-read -r -p "Do you want to install mod_security? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+if [[ $InstallModSecurity == 1 ]]
 then
     chmod +x /root/setup/krempo/lamp-modsecurity2.sh
     /bin/bash /root/setup/krempo/lamp-modsecurity2.sh
-else
-    echo "Skipping Mod Security"
 fi
-sleep 3
 
 echo "----------------------------"
 echo "We have reached the end of the script!"
 echo "Visit your website $fulldomain now in a browser"
+echo "Open /root/setup/krempo/logininfo.txt for your login details"
 echo "----------------------------"
-read nothing
+
